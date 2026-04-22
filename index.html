@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Générateur de mot de passe — Kinq Konq Maker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='3' y='3' width='8' height='8' rx='1.5' fill='%23d97757'/><rect x='13' y='3' width='8' height='8' rx='1.5' fill='%23d97757'/><rect x='3' y='13' width='8' height='8' rx='1.5' fill='%23d97757'/><rect x='13' y='13' width='8' height='8' rx='1.5' fill='%23d97757'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #f5f4ef;
+      --surface:      #ffffff;
+      --surface2:     #f0ede8;
+      --border:       rgba(0,0,0,0.08);
+      --border2:      rgba(0,0,0,0.14);
+      --text:         #1a1916;
+      --muted:        #8a8780;
+      --dim:          #c0bdb8;
+      --accent:       #d97757;
+      --accent-hover: #c4674a;
+      --accent-light: #fdf0eb;
+      --accent-text:  #7a3520;
+      --success:      #3a7d44;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', ui-sans-serif, sans-serif;
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(245,244,239,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-icon svg { width: 16px; height: 16px; fill: white; }
+
+    .logo-text {
+      font-size: 14px; font-weight: 600;
+      color: var(--text);
+    }
+
+    .logo-sep {
+      font-size: 14px;
+      color: var(--dim);
+      margin: 0 2px;
+    }
+
+    .logo-sub {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    header a {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+      margin-right: auto;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--accent-text);
+      background: var(--accent-light);
+      border: 1px solid rgba(217,119,87,0.25);
+      border-radius: 100px;
+      padding: 3px 10px;
+    }
+
+    .badge::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 2.2s ease-in-out infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    /* ── LAYOUT ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1rem 4rem;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .page-title {
+      margin-bottom: 0.5rem;
+    }
+
+    .page-title h1 {
+      font-family: var(--mono);
+      font-size: clamp(1.4rem, 4vw, 1.75rem);
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .page-title p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .card-body { padding: 1.25rem 1.5rem; }
+
+    /* ── PASSWORD OUTPUT ── */
+    .pw-wrap {
+      font-family: var(--mono);
+      font-size: clamp(13px, 2.5vw, 14px);
+      line-height: 1.7;
+      word-break: break-all;
+      letter-spacing: 0.03em;
+      min-height: 22px;
+      color: var(--accent);
+    }
+
+    .pw-wrap.placeholder {
+      color: var(--dim);
+      font-size: 13px;
+    }
+
+    .pw-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── STRENGTH ── */
+    .strength-section {
+      padding: 0 1.5rem 1.25rem;
+      display: none;
+      border-top: 1px solid var(--border);
+    }
+
+    .strength-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px;
+      padding-top: 1rem;
+    }
+
+    .strength-head span {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+    }
+
+    .strength-name {
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .bar-track {
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.35s ease, background 0.35s ease;
+      width: 0%;
+    }
+
+    /* ── BUTTONS ── */
+    button {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    button:hover { background: #e8e5e0; border-color: rgba(0,0,0,0.2); }
+    button:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    .btn-copy { min-width: 80px; text-align: center; }
+    .btn-copy.copied {
+      color: var(--success);
+      border-color: rgba(58,125,68,0.3);
+      background: #edf7ee;
+    }
+
+    /* ── CONTROLS ── */
+    .control-label {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .range-row label {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--muted);
+      min-width: 60px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      transition: transform 0.1s;
+      border: 2px solid white;
+      box-shadow: 0 0 0 1px rgba(217,119,87,0.4);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid white;
+      cursor: pointer;
+    }
+
+    .range-val {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+
+    .check-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .check-label:hover { background: var(--surface2); border-color: var(--border); }
+
+    .check-label input[type="checkbox"] {
+      -webkit-appearance: none;
+      width: 15px; height: 15px;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      background: var(--surface2);
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .check-label input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .check-label input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 4.5px;
+      width: 4px; height: 7px;
+      border: 2px solid white;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .check-label span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 1.5rem 1rem 2rem;
+      font-size: 11px;
+      color: var(--dim);
+      font-family: var(--mono);
+    }
+
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 400px) {
+      .options-grid { grid-template-columns: 1fr; }
+      .pw-actions { flex-wrap: wrap; }
+      header .badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="https://kinq-konq-maker.github.io" target="_blank">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="white">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/>
+        <rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+    </div>
+    <span class="logo-text">Kinq Konq Maker</span>
+    <span class="logo-sep">/</span>
+    <span class="logo-sub">password</span>
+  </a>
+  <div class="badge">crypto secure</div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <div class="page-title">
+      <h1>Générateur de<br>mot de passe</h1>
+      <p>Entropie maximale — aucune donnée transmise</p>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="pw-wrap placeholder" id="pw-display">Cliquer sur générer…</div>
+        <div class="pw-actions">
+          <button class="btn-primary" onclick="generate()">Générer</button>
+          <button class="btn-copy" id="copy-btn" onclick="copyPw()">Copier</button>
+        </div>
+      </div>
+      <div class="strength-section" id="strength-section">
+        <div class="strength-head">
+          <span class="strength-name" id="strength-name">—</span>
+          <span id="entropy-info">—</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <span class="control-label">Configuration</span>
+
+        <div class="range-row">
+          <label>longueur</label>
+          <input type="range" id="len-range" min="8" max="64" value="20" step="1"
+            oninput="document.getElementById('len-val').textContent=this.value; generate();" />
+          <span class="range-val" id="len-val">20</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="options-grid">
+          <label class="check-label">
+            <input type="checkbox" id="opt-upper" checked onchange="generate()" />
+            <span>Majuscules A–Z</span>
+          </label>
+          <label class="check-label">
+            <input type="checkbox" id="opt-lower" checked onchange="generate()" />
+            <span>Minuscules a–z</span>
+          </label>
+          <label class="check-label">
+            <input type="checkbox" id="opt-digits" checked onchange="generate()" />
+            <span>Chiffres 0–9</span>
+          </label>
+          <label class="check-label">
+            <input type="checkbox" id="opt-symbols" checked onchange="generate()" />
+            <span>Symboles !@#…</span>
+          </label>
+          <label class="check-label">
+            <input type="checkbox" id="opt-noambig" onchange="generate()" />
+            <span>Exclure 0 O l 1</span>
+          </label>
+          <label class="check-label">
+            <input type="checkbox" id="opt-memorable" onchange="generate()" />
+            <span>Mémorable</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <a href="https://kinq-konq-maker.github.io" target="_blank">kinq-konq-maker</a>
+  &nbsp;·&nbsp; crypto.getRandomValues() &nbsp;·&nbsp; 0 tracking
+</footer>
+
+<script>
+  const UPPER   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const LOWER   = 'abcdefghijklmnopqrstuvwxyz';
+  const DIGITS  = '0123456789';
+  const SYMBOLS = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+  const AMBIG   = new Set([...'0O1lI']);
+  const WORDS   = ['atlas','forge','nexus','delta','vague','lune','feu','mer','vent','chat','nuage','pluie','neige','tigre','renard','aigle','foret','pierre','fleuve','soleil','etoile','riviere','cobalt','prisme','racine','signal'];
+
+  let lastPw = '';
+
+  function rand(n) {
+    const buf = new Uint32Array(1);
+    const max = Math.floor(0xFFFFFFFF / n) * n;
+    do { crypto.getRandomValues(buf); } while (buf[0] >= max);
+    return buf[0] % n;
+  }
+
+  function charset() {
+    let c = '';
+    if (document.getElementById('opt-upper').checked)   c += UPPER;
+    if (document.getElementById('opt-lower').checked)   c += LOWER;
+    if (document.getElementById('opt-digits').checked)  c += DIGITS;
+    if (document.getElementById('opt-symbols').checked) c += SYMBOLS;
+    if (document.getElementById('opt-noambig').checked) c = [...c].filter(ch => !AMBIG.has(ch)).join('');
+    return c;
+  }
+
+  function genMemorable(len) {
+    const withUp   = document.getElementById('opt-upper').checked;
+    const withDig  = document.getElementById('opt-digits').checked;
+    const withSym  = document.getElementById('opt-symbols').checked;
+    let pw = '';
+    while (pw.length < len) {
+      let w = WORDS[rand(WORDS.length)];
+      if (withUp && pw.length === 0) w = w[0].toUpperCase() + w.slice(1);
+      pw += w;
+      if (withDig && pw.length < len) pw += DIGITS[rand(10)];
+      if (withSym && pw.length < len) pw += SYMBOLS[rand(SYMBOLS.length)];
+    }
+    return pw.slice(0, len);
+  }
+
+  function strength(bits) {
+    if (bits < 28) return { label: 'Très faible', pct:  8, color: '#c0392b' };
+    if (bits < 40) return { label: 'Faible',      pct: 25, color: '#e67e22' };
+    if (bits < 60) return { label: 'Correct',     pct: 50, color: '#d97757' };
+    if (bits < 80) return { label: 'Fort',        pct: 73, color: '#6aab5e' };
+    if (bits < 100)return { label: 'Très fort',   pct: 88, color: '#3a7d44' };
+    return               { label: 'Excellent',    pct:100, color: '#1e5c2a' };
+  }
+
+  function generate() {
+    const len = parseInt(document.getElementById('len-range').value);
+    const memorable = document.getElementById('opt-memorable').checked;
+    const cs = charset();
+
+    let pw;
+    if (memorable) {
+      pw = genMemorable(len);
+    } else {
+      if (!cs) {
+        document.getElementById('pw-display').textContent = 'Sélectionner au moins une option';
+        return;
+      }
+      pw = Array.from({length: len}, () => cs[rand(cs.length)]).join('');
+    }
+
+    lastPw = pw;
+    const el = document.getElementById('pw-display');
+    el.textContent = pw;
+    el.classList.remove('placeholder');
+
+    const csSize = memorable ? 62 : cs.length;
+    const bits = Math.round(len * Math.log2(csSize));
+    const s = strength(bits);
+
+    document.getElementById('strength-section').style.display = 'block';
+    document.getElementById('strength-name').textContent = s.label;
+    document.getElementById('strength-name').style.color = s.color;
+    document.getElementById('entropy-info').textContent  = bits + ' bits · ' + csSize + ' chars';
+    document.getElementById('bar-fill').style.width      = s.pct + '%';
+    document.getElementById('bar-fill').style.background = s.color;
+
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copier';
+    btn.classList.remove('copied');
+  }
+
+  function copyPw() {
+    if (!lastPw) return;
+    navigator.clipboard.writeText(lastPw).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copié !';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copier'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  generate();
+</script>
+</body>
+</html>
